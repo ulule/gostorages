@@ -10,7 +10,7 @@ type Storage interface {
 	Exists(filepath string) bool
 	Delete(filepath string) error
 	Open(filepath string) ([]byte, error)
-	Params(params map[string]string) error
+	NewFromParams(params map[string]string) (Storage, error)
 	ModifiedTime(filepath string) (time.Time, error)
 	Size(filepath string) int64
 }

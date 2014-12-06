@@ -21,7 +21,7 @@ var ACLs = map[string]s3.ACL{
 
 const LastModifiedFormat = time.RFC1123
 
-func NewS3Storage(accessKeyId string, secretAccessKey string, bucketName string, location string, region aws.Region, acl s3.ACL) (Storage, error) {
+func NewS3Storage(accessKeyId string, secretAccessKey string, bucketName string, location string, region aws.Region, acl s3.ACL) Storage {
 	return &S3Storage{
 		AccessKeyId:     accessKeyId,
 		SecretAccessKey: secretAccessKey,
@@ -29,30 +29,23 @@ func NewS3Storage(accessKeyId string, secretAccessKey string, bucketName string,
 		Location:        location,
 		Region:          region,
 		ACL:             acl,
-	}, nil
+	}
 }
 
-func (s *S3Storage) Params(params map[string]string) error {
+func (s *S3Storage) NewFromParams(params map[string]string) (Storage, error) {
 	ACL, ok := ACLs[params["acl"]]
 
 	if !ok {
-		return errors.New(fmt.Sprintf("The ACL %s does not exist", params["acl"]))
+		return nil, errors.New(fmt.Sprintf("The ACL %s does not exist", params["acl"]))
 	}
 
 	Region, ok := aws.Regions[params["region"]]
 
 	if !ok {
-		return errors.New(fmt.Sprintf("The Region %s does not exist", params["region"]))
+		return nil, errors.New(fmt.Sprintf("The Region %s does not exist", params["region"]))
 	}
 
-	s.AccessKeyId = params["access_key_id"]
-	s.SecretAccessKey = params["secret_access_key"]
-	s.BucketName = params["bucket_name"]
-	s.Location = params["location"]
-	s.Region = Region
-	s.ACL = ACL
-
-	return nil
+	return NewS3Storage(params["access_key_id"], params["secret_access_key"], params["bucket_name"], params["location"], Region, ACL), nil
 }
 
 type S3Storage struct {
@@ -153,6 +146,7 @@ func (s *S3Storage) SaveWithContentType(filepath string, content []byte, content
 	return err
 }
 
+// Save saves a file at the given path in the bucket
 func (s *S3Storage) Save(filepath string, content []byte) error {
 	return s.SaveWithContentType(filepath, content, mime.TypeByExtension(filepath))
 }
@@ -162,6 +156,7 @@ func (s *S3Storage) Path(filepath string) string {
 	return path.Join(s.Location, filepath)
 }
 
+// Size returns the size of the given file
 func (s *S3Storage) Size(filepath string) int64 {
 	key, err := s.GetKey(filepath)
 
@@ -172,6 +167,7 @@ func (s *S3Storage) Size(filepath string) int64 {
 	return key.Size
 }
 
+// ModifiedTime returns the last update time
 func (s *S3Storage) ModifiedTime(filepath string) (time.Time, error) {
 	key, err := s.GetKey(filepath)
 
