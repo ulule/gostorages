@@ -131,7 +131,7 @@ func (s *S3Storage) GetKey(filepath string) (*s3.Key, error) {
 
 // Exists checks if the given file is in the bucket
 func (s *S3Storage) Exists(filepath string) bool {
-	key, err := s.GetKey(filepath)
+	_, err := s.GetKey(filepath)
 
 	if err != nil {
 		return false
