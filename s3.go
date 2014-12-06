@@ -7,6 +7,7 @@ import (
 	"github.com/mitchellh/goamz/s3"
 	"mime"
 	"path"
+	"time"
 )
 
 var ACLs = map[string]s3.ACL{
@@ -167,4 +168,14 @@ func (s *S3Storage) Size(filepath string) int64 {
 	}
 
 	return key.Size
+}
+
+func (s *S3Storage) ModifiedTime(filepath string) (time.Time, error) {
+	key, err := s.GetKey(filepath)
+
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return time.Parse("%a, %d %b %Y %H:%M:%S %Z", key.LastModified)
 }
