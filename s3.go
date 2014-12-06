@@ -19,7 +19,7 @@ var ACLs = map[string]s3.ACL{
 	"bucket-owner-full-control": s3.BucketOwnerFull,
 }
 
-const LastModifiedFormat = "%a, %d %b %Y %H:%M:%S %Z"
+const LastModifiedFormat = time.RFC1123
 
 func NewS3Storage(accessKeyId string, secretAccessKey string, bucketName string, location string, region aws.Region, acl s3.ACL) (Storage, error) {
 	return &S3Storage{
