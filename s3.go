@@ -133,21 +133,19 @@ func (s *S3Storage) Exists(filepath string) bool {
 }
 
 // Save saves a file at the given path in the bucket
-func (s *S3Storage) SaveWithContentType(filepath string, content []byte, contentType string) (string, error) {
+func (s *S3Storage) SaveWithContentType(filepath string, content []byte, contentType string) error {
 	bucket, err := s.Bucket()
 
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	filename := s.Path(filepath)
+	err = bucket.Put(s.Path(filepath), content, contentType, s.ACL)
 
-	err = bucket.Put(filename, content, contentType, s.ACL)
-
-	return filename, err
+	return err
 }
 
-func (s *S3Storage) Save(filepath string, content []byte) (string, error) {
+func (s *S3Storage) Save(filepath string, content []byte) error {
 	return s.SaveWithContentType(filepath, content, mime.TypeByExtension(filepath))
 }
 

@@ -28,23 +28,21 @@ type FileSystemStorage struct {
 }
 
 // Save saves a file at the given path
-func (s *FileSystemStorage) Save(filepath string, content []byte) (string, error) {
+func (s *FileSystemStorage) Save(filepath string, content []byte) error {
 	return s.SaveWithPermissions(filepath, content, DefaultFilePermissions)
 }
 
 // SaveWithPermissions saves a file with the given permissions to the storage
-func (s *FileSystemStorage) SaveWithPermissions(filepath string, content []byte, perm os.FileMode) (string, error) {
+func (s *FileSystemStorage) SaveWithPermissions(filepath string, content []byte, perm os.FileMode) error {
 	_, err := os.Stat(s.Location)
 
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	filename := s.Path(filepath)
+	err = ioutil.WriteFile(s.Path(filepath), content, perm)
 
-	err = ioutil.WriteFile(filename, content, perm)
-
-	return filename, err
+	return err
 }
 
 // Open returns the file content
