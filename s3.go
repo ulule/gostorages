@@ -6,7 +6,6 @@ import (
 	"github.com/mitchellh/goamz/aws"
 	"github.com/mitchellh/goamz/s3"
 	"mime"
-	"net/http"
 	"path"
 )
 
@@ -111,21 +110,27 @@ func (s *S3Storage) Delete(filepath string) error {
 	return bucket.Del(s.Path(filepath))
 }
 
-// Exists checks if the given file is in the bucket
-func (s *S3Storage) Exists(filepath string) bool {
+func (s *S3Storage) GetKey(filepath string) (*s3.Key, error) {
 	bucket, err := s.Bucket()
 
 	if err != nil {
-		return false
+		return nil, err
 	}
 
-	res, err := bucket.Head(s.Path(filepath))
+	key, err := bucket.GetKey(s.Path(filepath))
 
 	if err != nil {
-		return false
+		return nil, err
 	}
 
-	if res.StatusCode != http.StatusOK {
+	return key, nil
+}
+
+// Exists checks if the given file is in the bucket
+func (s *S3Storage) Exists(filepath string) bool {
+	key, err := s.GetKey(filepath)
+
+	if err != nil {
 		return false
 	}
 
@@ -152,4 +157,14 @@ func (s *S3Storage) Save(filepath string, content []byte) error {
 // Path joins the given file to the storage output directory
 func (s *S3Storage) Path(filepath string) string {
 	return path.Join(s.Location, filepath)
+}
+
+func (s *S3Storage) Size(filepath string) int64 {
+	key, err := s.GetKey(filepath)
+
+	if err != nil {
+		return 0
+	}
+
+	return key.Size
 }
