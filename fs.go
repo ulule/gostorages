@@ -16,10 +16,6 @@ func NewFileSystemStorage(location string) Storage {
 	}
 }
 
-func (s *FileSystemStorage) NewFromParams(params map[string]string) (Storage, error) {
-	return NewFileSystemStorage(params["location"]), nil
-}
-
 // Storage is a file system storage handler
 type FileSystemStorage struct {
 	Location string

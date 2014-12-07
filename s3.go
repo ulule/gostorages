@@ -32,22 +32,6 @@ func NewS3Storage(accessKeyId string, secretAccessKey string, bucketName string,
 	}
 }
 
-func (s *S3Storage) NewFromParams(params map[string]string) (Storage, error) {
-	ACL, ok := ACLs[params["acl"]]
-
-	if !ok {
-		return nil, errors.New(fmt.Sprintf("The ACL %s does not exist", params["acl"]))
-	}
-
-	Region, ok := aws.Regions[params["region"]]
-
-	if !ok {
-		return nil, errors.New(fmt.Sprintf("The Region %s does not exist", params["region"]))
-	}
-
-	return NewS3Storage(params["access_key_id"], params["secret_access_key"], params["bucket_name"], params["location"], Region, ACL), nil
-}
-
 type S3Storage struct {
 	AccessKeyId     string
 	SecretAccessKey string
