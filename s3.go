@@ -1,8 +1,6 @@
 package storages
 
 import (
-	"errors"
-	"fmt"
 	"github.com/mitchellh/goamz/aws"
 	"github.com/mitchellh/goamz/s3"
 	"mime"
