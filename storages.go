@@ -12,4 +12,6 @@ type Storage interface {
 	Open(filepath string) ([]byte, error)
 	ModifiedTime(filepath string) (time.Time, error)
 	Size(filepath string) int64
+	URL(filename string) string
+	HasBaseURL() bool
 }

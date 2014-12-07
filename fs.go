@@ -5,25 +5,36 @@ import (
 	"os"
 	"path"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 )
 
 // NewStorage returns a file system storage engine
-func NewFileSystemStorage(location string) Storage {
+func NewFileSystemStorage(location string, baseURL string) Storage {
 	return &FileSystemStorage{
 		Location: location,
+		BaseURL:  baseURL,
 	}
 }
 
 // Storage is a file system storage handler
 type FileSystemStorage struct {
 	Location string
+	BaseURL  string
 }
 
 // Save saves a file at the given path
 func (s *FileSystemStorage) Save(filepath string, content []byte) error {
 	return s.SaveWithPermissions(filepath, content, DefaultFilePermissions)
+}
+
+func (s *FileSystemStorage) URL(filename string) string {
+	return strings.Join([]string{s.BaseURL, s.Path(filename)}, "/")
+}
+
+func (s *FileSystemStorage) HasBaseURL() bool {
+	return s.BaseURL != ""
 }
 
 // SaveWithPermissions saves a file with the given permissions to the storage

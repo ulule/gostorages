@@ -5,6 +5,7 @@ import (
 	"github.com/mitchellh/goamz/s3"
 	"mime"
 	"path"
+	"strings"
 	"time"
 )
 
@@ -19,7 +20,7 @@ var ACLs = map[string]s3.ACL{
 
 const LastModifiedFormat = time.RFC1123
 
-func NewS3Storage(accessKeyId string, secretAccessKey string, bucketName string, location string, region aws.Region, acl s3.ACL) Storage {
+func NewS3Storage(accessKeyId string, secretAccessKey string, bucketName string, location string, region aws.Region, acl s3.ACL, baseURL string) Storage {
 	return &S3Storage{
 		AccessKeyId:     accessKeyId,
 		SecretAccessKey: secretAccessKey,
@@ -27,6 +28,7 @@ func NewS3Storage(accessKeyId string, secretAccessKey string, bucketName string,
 		Location:        location,
 		Region:          region,
 		ACL:             acl,
+		BaseURL:         strings.TrimSuffix(baseURL, "/"),
 	}
 }
 
@@ -37,11 +39,20 @@ type S3Storage struct {
 	Location        string
 	Region          aws.Region
 	ACL             s3.ACL
+	BaseURL         string
 }
 
 // Auth returns a Auth instance
 func (s *S3Storage) Auth() (auth aws.Auth, err error) {
 	return aws.GetAuth(s.AccessKeyId, s.SecretAccessKey)
+}
+
+func (s *S3Storage) URL(filename string) string {
+	return strings.Join([]string{s.BaseURL, s.Path(filename)}, "/")
+}
+
+func (s *S3Storage) HasBaseURL() bool {
+	return s.BaseURL != ""
 }
 
 // Client returns a S3 instance
