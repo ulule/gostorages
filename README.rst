@@ -1,7 +1,7 @@
 storages
 ========
 
-django-storages is a collection of custom storage backends for golang.
+storages is a collection of custom storage backends for Go.
 
 Currently, it supports the following storages:
 
