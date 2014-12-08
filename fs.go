@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"reflect"
 	"runtime"
 	"strings"
 	"syscall"
@@ -81,7 +82,6 @@ func (s *FileSystemStorage) Exists(filepath string) bool {
 	return err == nil
 }
 
-// AccessedTime returns the last access time.
 func (s *FileSystemStorage) AccessedTime(filepath string) (time.Time, error) {
 	fi, err := os.Stat(s.Path(filepath))
 	if err != nil {
@@ -90,8 +90,16 @@ func (s *FileSystemStorage) AccessedTime(filepath string) (time.Time, error) {
 	if runtime.GOOS == "windows" {
 		return s.ModifiedTime(filepath)
 	}
+
 	stat := fi.Sys().(*syscall.Stat_t)
-	return time.Unix(int64(stat.Atim.Sec), int64(stat.Atim.Nsec)), nil
+
+	atim := reflect.ValueOf(stat).FieldByName("Atim")
+
+	sec := atim.FieldByName("Sec").Int()
+
+	nsec := atim.FieldByName("Nsec").Int()
+
+	return time.Unix(int64(sec), int64(nsec)), nil
 }
 
 // CreatedTime returns the last access time.
@@ -104,7 +112,14 @@ func (s *FileSystemStorage) CreatedTime(filepath string) (time.Time, error) {
 		return s.ModifiedTime(filepath)
 	}
 	stat := fi.Sys().(*syscall.Stat_t)
-	return time.Unix(int64(stat.Ctim.Sec), int64(stat.Ctim.Nsec)), nil
+
+	atim := reflect.ValueOf(stat).FieldByName("Ctim")
+
+	sec := atim.FieldByName("Sec").Int()
+
+	nsec := atim.FieldByName("Nsec").Int()
+
+	return time.Unix(int64(sec), int64(nsec)), nil
 }
 
 // Size returns the size of the given file
