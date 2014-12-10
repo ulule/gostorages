@@ -48,7 +48,11 @@ func (s *S3Storage) Auth() (auth aws.Auth, err error) {
 }
 
 func (s *S3Storage) URL(filename string) string {
-	return strings.Join([]string{s.BaseURL, s.Path(filename)}, "/")
+	if s.HasBaseURL() {
+		return strings.Join([]string{s.BaseURL, s.Path(filename)}, "/")
+	}
+
+	return ""
 }
 
 func (s *S3Storage) HasBaseURL() bool {

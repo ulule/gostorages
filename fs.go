@@ -31,7 +31,11 @@ func (s *FileSystemStorage) Save(filepath string, content []byte) error {
 }
 
 func (s *FileSystemStorage) URL(filename string) string {
-	return strings.Join([]string{s.BaseURL, s.Path(filename)}, "/")
+	if s.HasBaseURL() {
+		return strings.Join([]string{s.BaseURL, s.Path(filename)}, "/")
+	}
+
+	return ""
 }
 
 func (s *FileSystemStorage) HasBaseURL() bool {
