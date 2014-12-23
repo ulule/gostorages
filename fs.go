@@ -50,7 +50,17 @@ func (s *FileSystemStorage) SaveWithPermissions(filepath string, content []byte,
 		return err
 	}
 
-	err = ioutil.WriteFile(s.Path(filepath), content, perm)
+	location := s.Path(filepath)
+
+	basename := location[:strings.LastIndex(location, "/")+1]
+
+	err = os.MkdirAll(basename, perm)
+
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(location, content, perm)
 
 	return err
 }

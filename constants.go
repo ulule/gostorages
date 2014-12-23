@@ -4,4 +4,4 @@ import (
 	"os"
 )
 
-var DefaultFilePermissions os.FileMode = 0640
+var DefaultFilePermissions os.FileMode = 0755
