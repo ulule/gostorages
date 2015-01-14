@@ -4,7 +4,6 @@ import (
 	"github.com/mitchellh/goamz/aws"
 	"github.com/mitchellh/goamz/s3"
 	"mime"
-	"path"
 	"strings"
 	"time"
 )
@@ -141,11 +140,6 @@ func (s *S3Storage) SaveWithContentType(filepath string, content []byte, content
 // Save saves a file at the given path in the bucket
 func (s *S3Storage) Save(filepath string, content []byte) error {
 	return s.SaveWithContentType(filepath, content, mime.TypeByExtension(filepath))
-}
-
-// Path joins the given file to the storage output directory
-func (s *S3Storage) Path(filepath string) string {
-	return path.Join(s.Location, filepath)
 }
 
 // Size returns the size of the given file
