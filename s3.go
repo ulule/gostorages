@@ -21,25 +21,24 @@ var ACLs = map[string]s3.ACL{
 const LastModifiedFormat = time.RFC1123
 
 func NewS3Storage(accessKeyId string, secretAccessKey string, bucketName string, location string, region aws.Region, acl s3.ACL, baseURL string) Storage {
+
 	return &S3Storage{
-		AccessKeyId:     accessKeyId,
-		SecretAccessKey: secretAccessKey,
-		BucketName:      bucketName,
-		Location:        location,
-		Region:          region,
-		ACL:             acl,
-		BaseURL:         strings.TrimSuffix(baseURL, "/"),
+		NewBaseStorage(location, baseURL),
+		accessKeyId,
+		secretAccessKey,
+		bucketName,
+		region,
+		acl,
 	}
 }
 
 type S3Storage struct {
+	*BaseStorage
 	AccessKeyId     string
 	SecretAccessKey string
 	BucketName      string
-	Location        string
 	Region          aws.Region
 	ACL             s3.ACL
-	BaseURL         string
 }
 
 // Auth returns a Auth instance
@@ -53,10 +52,6 @@ func (s *S3Storage) URL(filename string) string {
 	}
 
 	return ""
-}
-
-func (s *S3Storage) HasBaseURL() bool {
-	return s.BaseURL != ""
 }
 
 // Client returns a S3 instance

@@ -3,7 +3,6 @@ package storages
 import (
 	"io/ioutil"
 	"os"
-	"path"
 	"reflect"
 	"runtime"
 	"strings"
@@ -14,32 +13,21 @@ import (
 // NewStorage returns a file system storage engine
 func NewFileSystemStorage(location string, baseURL string) Storage {
 	return &FileSystemStorage{
-		Location: location,
-		BaseURL:  baseURL,
+		&BaseStorage{
+			Location: location,
+			BaseURL:  baseURL,
+		},
 	}
 }
 
 // Storage is a file system storage handler
 type FileSystemStorage struct {
-	Location string
-	BaseURL  string
+	*BaseStorage
 }
 
 // Save saves a file at the given path
 func (s *FileSystemStorage) Save(filepath string, content []byte) error {
 	return s.SaveWithPermissions(filepath, content, DefaultFilePermissions)
-}
-
-func (s *FileSystemStorage) URL(filename string) string {
-	if s.HasBaseURL() {
-		return strings.Join([]string{s.BaseURL, s.Path(filename)}, "/")
-	}
-
-	return ""
-}
-
-func (s *FileSystemStorage) HasBaseURL() bool {
-	return s.BaseURL != ""
 }
 
 // SaveWithPermissions saves a file with the given permissions to the storage
@@ -83,11 +71,6 @@ func (s *FileSystemStorage) ModifiedTime(filepath string) (time.Time, error) {
 	}
 
 	return fi.ModTime(), nil
-}
-
-// Path joins the given file to the storage path
-func (s *FileSystemStorage) Path(filepath string) string {
-	return path.Join(s.Location, filepath)
 }
 
 // Exists checks if the given file is in the storage
