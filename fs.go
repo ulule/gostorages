@@ -25,6 +25,26 @@ type FileSystemStorage struct {
 	*BaseStorage
 }
 
+type FileSystemFile struct {
+	*os.File
+	Storage  Storage
+	FileInfo os.FileInfo
+}
+
+func NewFileSystemFile(storage Storage, file *os.File) (*FileSystemFile, error) {
+	fileInfo, err := file.Stat()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &FileSystemFile{
+		file,
+		storage,
+		fileInfo,
+	}, nil
+}
+
 // Save saves a file at the given path
 func (s *FileSystemStorage) Save(filepath string, content []byte) error {
 	return s.SaveWithPermissions(filepath, content, DefaultFilePermissions)
@@ -54,8 +74,14 @@ func (s *FileSystemStorage) SaveWithPermissions(filepath string, content []byte,
 }
 
 // Open returns the file content
-func (s *FileSystemStorage) Open(filepath string) ([]byte, error) {
-	return ioutil.ReadFile(s.Path(filepath))
+func (s *FileSystemStorage) Open(filepath string) (*FileSystemFile, error) {
+	file, err := os.Open(s.Path(filepath))
+
+	if err != nil {
+		return nil, err
+	}
+
+	return NewFileSystemFile(s, file)
 }
 
 // Delete the file from storage

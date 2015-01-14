@@ -15,3 +15,9 @@ type Storage interface {
 	URL(filename string) string
 	HasBaseURL() bool
 }
+
+type File interface {
+	Size() int64
+	Write(b []byte) (n int, err error)
+	Read(b []byte) (n int, err error)
+}
