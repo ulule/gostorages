@@ -3,8 +3,9 @@ package storages
 import (
 	"github.com/mitchellh/goamz/aws"
 	"github.com/mitchellh/goamz/s3"
+	"io"
+	"io/ioutil"
 	"mime"
-	"strings"
 	"time"
 )
 
@@ -41,6 +42,7 @@ type S3Storage struct {
 }
 
 type S3StorageFile struct {
+	io.ReadCloser
 	Key     *s3.Key
 	Storage Storage
 }
@@ -49,23 +51,23 @@ func (f *S3StorageFile) Size() int64 {
 	return f.Key.Size
 }
 
-func (f *S3StorageFile) Write(b []byte) (n int, err error) {
+func (f *S3StorageFile) ReadAll() ([]byte, error) {
+	content, err := ioutil.ReadAll(f)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return content, nil
 }
 
-func (f *S3StorageFile) Read(b []byte) (n int, err error) {
+func (f *S3StorageFile) Close() error {
+	return f.Close()
 }
 
 // Auth returns a Auth instance
 func (s *S3Storage) Auth() (auth aws.Auth, err error) {
 	return aws.GetAuth(s.AccessKeyId, s.SecretAccessKey)
-}
-
-func (s *S3Storage) URL(filename string) string {
-	if s.HasBaseURL() {
-		return strings.Join([]string{s.BaseURL, s.Path(filename)}, "/")
-	}
-
-	return ""
 }
 
 // Client returns a S3 instance
@@ -98,15 +100,22 @@ func (s *S3Storage) Open(filepath string) (File, error) {
 		return nil, err
 	}
 
-	key, err := s.GetKey(filepath)
+	key, err := s.Key(filepath)
+
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := bucket.GetReader(filepath)
 
 	if err != nil {
 		return nil, err
 	}
 
 	return &S3StorageFile{
-		Key:     key,
-		Storage: s,
+		body,
+		key,
+		s,
 	}, nil
 }
 
@@ -121,7 +130,7 @@ func (s *S3Storage) Delete(filepath string) error {
 	return bucket.Del(s.Path(filepath))
 }
 
-func (s *S3Storage) GetKey(filepath string) (*s3.Key, error) {
+func (s *S3Storage) Key(filepath string) (*s3.Key, error) {
 	bucket, err := s.Bucket()
 
 	if err != nil {
@@ -139,7 +148,7 @@ func (s *S3Storage) GetKey(filepath string) (*s3.Key, error) {
 
 // Exists checks if the given file is in the bucket
 func (s *S3Storage) Exists(filepath string) bool {
-	_, err := s.GetKey(filepath)
+	_, err := s.Key(filepath)
 
 	if err != nil {
 		return false
@@ -149,8 +158,14 @@ func (s *S3Storage) Exists(filepath string) bool {
 }
 
 // Save saves a file at the given path in the bucket
-func (s *S3Storage) SaveWithContentType(filepath string, content []byte, contentType string) error {
+func (s *S3Storage) SaveWithContentType(filepath string, file File, contentType string) error {
 	bucket, err := s.Bucket()
+
+	if err != nil {
+		return err
+	}
+
+	content, err := file.ReadAll()
 
 	if err != nil {
 		return err
@@ -162,13 +177,13 @@ func (s *S3Storage) SaveWithContentType(filepath string, content []byte, content
 }
 
 // Save saves a file at the given path in the bucket
-func (s *S3Storage) Save(filepath string, content []byte) error {
-	return s.SaveWithContentType(filepath, content, mime.TypeByExtension(filepath))
+func (s *S3Storage) Save(filepath string, file File) error {
+	return s.SaveWithContentType(filepath, file, mime.TypeByExtension(filepath))
 }
 
 // Size returns the size of the given file
 func (s *S3Storage) Size(filepath string) int64 {
-	key, err := s.GetKey(filepath)
+	key, err := s.Key(filepath)
 
 	if err != nil {
 		return 0
@@ -179,7 +194,7 @@ func (s *S3Storage) Size(filepath string) int64 {
 
 // ModifiedTime returns the last update time
 func (s *S3Storage) ModifiedTime(filepath string) (time.Time, error) {
-	key, err := s.GetKey(filepath)
+	key, err := s.Key(filepath)
 
 	if err != nil {
 		return time.Time{}, err

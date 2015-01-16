@@ -5,7 +5,7 @@ import (
 )
 
 type Storage interface {
-	Save(filepath string, content []byte) error
+	Save(filepath string, file File) error
 	Path(filepath string) string
 	Exists(filepath string) bool
 	Delete(filepath string) error
@@ -18,6 +18,7 @@ type Storage interface {
 
 type File interface {
 	Size() int64
-	Write(b []byte) (n int, err error)
-	Read(b []byte) (n int, err error)
+	Read(b []byte) (int, error)
+	ReadAll() ([]byte, error)
+	Close() error
 }

@@ -10,16 +10,6 @@ import (
 	"time"
 )
 
-// NewStorage returns a file system storage engine
-func NewFileSystemStorage(location string, baseURL string) Storage {
-	return &FileSystemStorage{
-		&BaseStorage{
-			Location: location,
-			BaseURL:  baseURL,
-		},
-	}
-}
-
 // Storage is a file system storage handler
 type FileSystemStorage struct {
 	*BaseStorage
@@ -29,6 +19,16 @@ type FileSystemFile struct {
 	*os.File
 	Storage  Storage
 	FileInfo os.FileInfo
+}
+
+// NewStorage returns a file system storage engine
+func NewFileSystemStorage(location string, baseURL string) Storage {
+	return &FileSystemStorage{
+		&BaseStorage{
+			Location: location,
+			BaseURL:  baseURL,
+		},
+	}
 }
 
 func NewFileSystemFile(storage Storage, file *os.File) (*FileSystemFile, error) {
@@ -49,13 +49,23 @@ func (f *FileSystemFile) Size() int64 {
 	return f.FileInfo.Size()
 }
 
+func (f *FileSystemFile) ReadAll() ([]byte, error) {
+	content, err := ioutil.ReadAll(f)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return content, nil
+}
+
 // Save saves a file at the given path
-func (s *FileSystemStorage) Save(filepath string, content []byte) error {
-	return s.SaveWithPermissions(filepath, content, DefaultFilePermissions)
+func (s *FileSystemStorage) Save(filepath string, file File) error {
+	return s.SaveWithPermissions(filepath, file, DefaultFilePermissions)
 }
 
 // SaveWithPermissions saves a file with the given permissions to the storage
-func (s *FileSystemStorage) SaveWithPermissions(filepath string, content []byte, perm os.FileMode) error {
+func (s *FileSystemStorage) SaveWithPermissions(filepath string, file File, perm os.FileMode) error {
 	_, err := os.Stat(s.Location)
 
 	if err != nil {
@@ -67,6 +77,12 @@ func (s *FileSystemStorage) SaveWithPermissions(filepath string, content []byte,
 	basename := location[:strings.LastIndex(location, "/")+1]
 
 	err = os.MkdirAll(basename, perm)
+
+	if err != nil {
+		return err
+	}
+
+	content, err := file.ReadAll()
 
 	if err != nil {
 		return err

@@ -1,6 +1,8 @@
 package storages
 
 import (
+	"bytes"
+	"io/ioutil"
 	"path"
 	"strings"
 )
@@ -8,6 +10,32 @@ import (
 type BaseStorage struct {
 	BaseURL  string
 	Location string
+}
+
+type ContentFile struct {
+	*bytes.Reader
+}
+
+func (f *ContentFile) Close() error {
+	return nil
+}
+
+func (f *ContentFile) Size() int64 {
+	return int64(f.Len())
+}
+
+func (f *ContentFile) ReadAll() ([]byte, error) {
+	content, err := ioutil.ReadAll(f)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return content, nil
+}
+
+func NewContentFile(content []byte) *ContentFile {
+	return &ContentFile{bytes.NewReader(content)}
 }
 
 func NewBaseStorage(location string, baseURL string) *BaseStorage {
