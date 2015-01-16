@@ -61,10 +61,6 @@ func (f *S3StorageFile) ReadAll() ([]byte, error) {
 	return content, nil
 }
 
-func (f *S3StorageFile) Close() error {
-	return f.Close()
-}
-
 // Auth returns a Auth instance
 func (s *S3Storage) Auth() (auth aws.Auth, err error) {
 	return aws.GetAuth(s.AccessKeyId, s.SecretAccessKey)
@@ -106,7 +102,7 @@ func (s *S3Storage) Open(filepath string) (File, error) {
 		return nil, err
 	}
 
-	body, err := bucket.GetReader(filepath)
+	body, err := bucket.GetReader(s.Path(filepath))
 
 	if err != nil {
 		return nil, err
