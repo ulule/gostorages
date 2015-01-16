@@ -45,6 +45,10 @@ func NewFileSystemFile(storage Storage, file *os.File) (*FileSystemFile, error) 
 	}, nil
 }
 
+func (f *FileSystemFile) Size() int64 {
+	return f.FileInfo.Size()
+}
+
 // Save saves a file at the given path
 func (s *FileSystemStorage) Save(filepath string, content []byte) error {
 	return s.SaveWithPermissions(filepath, content, DefaultFilePermissions)
@@ -74,7 +78,7 @@ func (s *FileSystemStorage) SaveWithPermissions(filepath string, content []byte,
 }
 
 // Open returns the file content
-func (s *FileSystemStorage) Open(filepath string) (*FileSystemFile, error) {
+func (s *FileSystemStorage) Open(filepath string) (File, error) {
 	file, err := os.Open(s.Path(filepath))
 
 	if err != nil {

@@ -40,6 +40,21 @@ type S3Storage struct {
 	ACL             s3.ACL
 }
 
+type S3StorageFile struct {
+	Key     *s3.Key
+	Storage Storage
+}
+
+func (f *S3StorageFile) Size() int64 {
+	return f.Key.Size
+}
+
+func (f *S3StorageFile) Write(b []byte) (n int, err error) {
+}
+
+func (f *S3StorageFile) Read(b []byte) (n int, err error) {
+}
+
 // Auth returns a Auth instance
 func (s *S3Storage) Auth() (auth aws.Auth, err error) {
 	return aws.GetAuth(s.AccessKeyId, s.SecretAccessKey)
@@ -76,14 +91,23 @@ func (s *S3Storage) Bucket() (*s3.Bucket, error) {
 }
 
 // Open returns the file content in a dedicated bucket
-func (s *S3Storage) Open(filepath string) ([]byte, error) {
+func (s *S3Storage) Open(filepath string) (File, error) {
 	bucket, err := s.Bucket()
 
 	if err != nil {
 		return nil, err
 	}
 
-	return bucket.Get(s.Path(filepath))
+	key, err := s.GetKey(filepath)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &S3StorageFile{
+		Key:     key,
+		Storage: s,
+	}, nil
 }
 
 // Delete the file from the bucket
