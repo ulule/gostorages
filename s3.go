@@ -52,13 +52,7 @@ func (f *S3StorageFile) Size() int64 {
 }
 
 func (f *S3StorageFile) ReadAll() ([]byte, error) {
-	content, err := ioutil.ReadAll(f)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return content, nil
+	return ioutil.ReadAll(f)
 }
 
 // Auth returns a Auth instance

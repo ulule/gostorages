@@ -50,13 +50,7 @@ func (f *FileSystemFile) Size() int64 {
 }
 
 func (f *FileSystemFile) ReadAll() ([]byte, error) {
-	content, err := ioutil.ReadAll(f)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return content, nil
+	return ioutil.ReadAll(f)
 }
 
 // Save saves a file at the given path

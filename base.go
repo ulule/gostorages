@@ -25,13 +25,7 @@ func (f *ContentFile) Size() int64 {
 }
 
 func (f *ContentFile) ReadAll() ([]byte, error) {
-	content, err := ioutil.ReadAll(f)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return content, nil
+	return ioutil.ReadAll(f)
 }
 
 func NewContentFile(content []byte) *ContentFile {
