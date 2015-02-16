@@ -1,4 +1,4 @@
-package storages
+package gostorages
 
 import (
 	"github.com/mitchellh/goamz/aws"
