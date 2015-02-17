@@ -45,6 +45,14 @@ func NewFileSystemFile(storage Storage, file *os.File) (*FileSystemFile, error) 
 	}, nil
 }
 
+func (s *FileSystemStorage) URL(filename string) string {
+	if s.HasBaseURL() {
+		return strings.Join([]string{s.BaseURL, filename}, "/")
+	}
+
+	return ""
+}
+
 func (f *FileSystemFile) Size() int64 {
 	return f.FileInfo.Size()
 }
