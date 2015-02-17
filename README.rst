@@ -31,7 +31,7 @@ File system
 
     import (
         "fmt"
-        "github.com/thoas/gostorages
+        "github.com/thoas/gostorages"
         "os"
     )
 
