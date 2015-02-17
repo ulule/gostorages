@@ -53,7 +53,7 @@ To use the ``FileSystemStorage`` you must have a location to save your files.
         // Saving a file named test
         storage.Save("test", gostorages.ContentFile([]byte("(╯°□°）╯︵ ┻━┻")))
 
-        storage.URL("test") // => http://img.example.com/test
+        fmt.Println(storage.URL("test")) // => http://img.example.com/test
 
         // Deleting the new file on the storage
         storage.Delete("test")
@@ -73,7 +73,7 @@ To use the ``S3Storage`` you must have:
 
 You can find your credentials in `Security credentials <https://console.aws.amazon.com/iam/home?nc2=h_m_sc#security_credential>`_.
 
-In the following example, I'm assuming my bucket is located in a european region.
+In the following example, I'm assuming my bucket is located in european region.
 
 .. code-block:: go
 
@@ -95,7 +95,7 @@ In the following example, I'm assuming my bucket is located in a european region
         // Saving a file named test
         storage.Save("test", gostorages.ContentFile([]byte("(>_<)")))
 
-        storage.URL("test") // => http://s3-eu-west-1.amazonaws.com/my-bucket/test
+        fmt.Println(storage.URL("test")) // => http://s3-eu-west-1.amazonaws.com/my-bucket/test
 
         // Deleting the new file on the storage
         storage.Delete("test")
