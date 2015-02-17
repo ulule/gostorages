@@ -23,6 +23,13 @@ Just run:
 Usage
 =====
 
+It offers you a single API to manipulate your files on multiple storages.
+
+If you are migrating from a File system storage to an Amazon S3, you don't need
+to migrate all your methods anymore!
+
+Be lazy again!
+
 File system
 -----------
 
