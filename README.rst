@@ -35,17 +35,19 @@ File system
         "os"
     )
 
-	tmp := os.TempDir()
+    func main() {
+        tmp := os.TempDir()
 
-	storage := gostorages.NewFileSystemStorage(tmp, "http://img.example.com")
+        storage := gostorages.NewFileSystemStorage(tmp, "http://img.example.com")
 
-    // Saving a file named test
-    storage.Save("test", gostorages.ContentFile([]byte("(╯°□°）╯︵ ┻━┻")))
+        // Saving a file named test
+        storage.Save("test", gostorages.ContentFile([]byte("(╯°□°）╯︵ ┻━┻")))
 
-    storage.URL("test") // => http://img.example.com/test
+        storage.URL("test") // => http://img.example.com/test
 
-    // Deleting the new file on the storage
-    storage.Delete("test")
+        // Deleting the new file on the storage
+        storage.Delete("test")
+    }
 
 Roadmap
 =======
