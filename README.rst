@@ -17,6 +17,7 @@ Installation
 Just run:
 
 ::
+
     $ go get github.com/thoas/gostorages
 
 Usage
