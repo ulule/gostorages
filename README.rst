@@ -33,6 +33,8 @@ Be lazy again!
 File system
 -----------
 
+To use the ``FileSystemStorage`` you must have a location to save your files.
+
 .. code-block:: go
 
     package main
@@ -52,6 +54,48 @@ File system
         storage.Save("test", gostorages.ContentFile([]byte("(╯°□°）╯︵ ┻━┻")))
 
         storage.URL("test") // => http://img.example.com/test
+
+        // Deleting the new file on the storage
+        storage.Delete("test")
+    }
+
+
+Amazon S3
+---------
+
+To use the ``S3Storage`` you must have:
+
+* An access key id
+* A secret access key
+* A bucket name
+* Give the region of your bucket
+* Give the ACL you want to use
+
+You can find your credentials in `Security credentials <https://console.aws.amazon.com/iam/home?nc2=h_m_sc#security_credential>`_.
+
+In the following example, I'm assuming my bucket is located in a european region.
+
+.. code-block:: go
+
+    package main
+
+    import (
+        "fmt"
+        "github.com/thoas/gostorages"
+        "github.com/mitchellh/goamz/aws"
+        "github.com/mitchellh/goamz/s3"
+        "os"
+    )
+
+    func main() {
+        baseURL := "http://s3-eu-west-1.amazonaws.com/my-bucket"
+
+        storage := gostorages.NewS3Storage(os.Getenv("ACCESS_KEY_ID"), os.Getenv("SECRET_ACCESS_KEY"), "my-bucket", "", aws.Regions["eu-west-1"], s3.PublicReadWrite, baseURL)
+
+        // Saving a file named test
+        storage.Save("test", gostorages.ContentFile([]byte("(>_<)")))
+
+        storage.URL("test") // => http://s3-eu-west-1.amazonaws.com/my-bucket/test
 
         // Deleting the new file on the storage
         storage.Delete("test")
