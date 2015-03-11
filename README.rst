@@ -1,7 +1,7 @@
 gostorages
 ==========
 
-An unified interface to manipulate storage engine for Go.
+A unified interface to manipulate storage engine for Go.
 
 gostorages is used in `picfit <https://github.com/thoas/picfit>`_ to allow us
 switching over storage engine.
