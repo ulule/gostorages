@@ -6,7 +6,9 @@ import (
 	"io"
 	"io/ioutil"
 	"mime"
+	"path/filepath"
 	"time"
+
 )
 
 var ACLs = map[string]s3.ACL{
@@ -167,8 +169,8 @@ func (s *S3Storage) SaveWithContentType(filepath string, file File, contentType 
 }
 
 // Save saves a file at the given path in the bucket
-func (s *S3Storage) Save(filepath string, file File) error {
-	return s.SaveWithContentType(filepath, file, mime.TypeByExtension(filepath))
+func (s *S3Storage) Save(path string, file File) error {
+	return s.SaveWithContentType(path, file, mime.TypeByExtension(filepath.Ext(path)))
 }
 
 // Size returns the size of the given file
