@@ -3,7 +3,7 @@ gostorages
 
 A unified interface to manipulate storage engine for Go.
 
-gostorages is used in `picfit <https://github.com/thoas/picfit>`_ to allow us
+gostorages is used in `picfit <https://github.com/ulule/picfit>`_ to allow us
 switching over storage engine.
 
 Currently, it supports the following storages:
@@ -18,7 +18,7 @@ Just run:
 
 ::
 
-    $ go get github.com/thoas/gostorages
+    $ go get github.com/ulule/gostorages
 
 Usage
 =====
@@ -41,7 +41,7 @@ To use the ``FileSystemStorage`` you must have a location to save your files.
 
     import (
         "fmt"
-        "github.com/thoas/gostorages"
+        "github.com/ulule/gostorages"
         "os"
     )
 
@@ -81,7 +81,7 @@ In the following example, I'm assuming my bucket is located in european region.
 
     import (
         "fmt"
-        "github.com/thoas/gostorages"
+        "github.com/ulule/gostorages"
         "github.com/mitchellh/goamz/aws"
         "github.com/mitchellh/goamz/s3"
         "os"
@@ -104,6 +104,6 @@ In the following example, I'm assuming my bucket is located in european region.
 Roadmap
 =======
 
-see `issues <https://github.com/thoas/gostorages/issues>`_
+see `issues <https://github.com/ulule/gostorages/issues>`_
 
 Don't hesitate to send patch or improvements.
