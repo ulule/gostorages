@@ -4,7 +4,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -18,7 +18,7 @@ func Test(t *testing.T) {
 
 	storage := NewFileSystemStorage(tmp, baseURL)
 
-	filename := path.Base(file.Name())
+	filename := filepath.Base(file.Name())
 
 	assert.True(t, storage.Exists(filename))
 

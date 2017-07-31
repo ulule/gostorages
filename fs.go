@@ -3,11 +3,9 @@ package gostorages
 import (
 	"io/ioutil"
 	"os"
-	"reflect"
-	"runtime"
 	"strings"
-	"syscall"
 	"time"
+	"github.com/djherbis/times"
 )
 
 // Storage is a file system storage handler
@@ -128,43 +126,22 @@ func (s *FileSystemStorage) Exists(filepath string) bool {
 }
 
 func (s *FileSystemStorage) AccessedTime(filepath string) (time.Time, error) {
-	fi, err := os.Stat(s.Path(filepath))
+	t, err := times.Stat(s.Path(filepath))
 	if err != nil {
 		return time.Time{}, err
 	}
-	if runtime.GOOS == "windows" {
-		return s.ModifiedTime(filepath)
-	}
 
-	stat := fi.Sys().(*syscall.Stat_t)
-
-	atim := reflect.ValueOf(stat).FieldByName("Atim")
-
-	sec := atim.FieldByName("Sec").Int()
-
-	nsec := atim.FieldByName("Nsec").Int()
-
-	return time.Unix(int64(sec), int64(nsec)), nil
+	return t.AccessTime(), nil
 }
 
 // CreatedTime returns the last access time.
 func (s *FileSystemStorage) CreatedTime(filepath string) (time.Time, error) {
-	fi, err := os.Stat(s.Path(filepath))
+	t, err := times.Stat(s.Path(filepath))
 	if err != nil {
 		return time.Time{}, err
 	}
-	if runtime.GOOS == "windows" {
-		return s.ModifiedTime(filepath)
-	}
-	stat := fi.Sys().(*syscall.Stat_t)
 
-	atim := reflect.ValueOf(stat).FieldByName("Ctim")
-
-	sec := atim.FieldByName("Sec").Int()
-
-	nsec := atim.FieldByName("Nsec").Int()
-
-	return time.Unix(int64(sec), int64(nsec)), nil
+	return t.ChangeTime(), nil
 }
 
 // Size returns the size of the given file
