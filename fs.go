@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"time"
+
 	"github.com/djherbis/times"
 )
 
@@ -151,4 +152,10 @@ func (s *FileSystemStorage) Size(filepath string) int64 {
 		return 0
 	}
 	return fi.Size()
+}
+
+// IsNotExist returns a boolean indicating whether the error is known
+// to report that a file or directory does not exist.
+func (s *FileSystemStorage) IsNotExist(err error) bool {
+	return os.IsNotExist(err)
 }

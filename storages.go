@@ -14,6 +14,7 @@ type Storage interface {
 	Size(filepath string) int64
 	URL(filename string) string
 	HasBaseURL() bool
+	IsNotExist(err error) bool
 }
 
 type File interface {
