@@ -1,14 +1,14 @@
 package gostorages
 
 import (
-	"github.com/mitchellh/goamz/aws"
-	"github.com/mitchellh/goamz/s3"
 	"io"
 	"io/ioutil"
 	"mime"
 	"path/filepath"
 	"time"
 
+	"github.com/mitchellh/goamz/aws"
+	"github.com/mitchellh/goamz/s3"
 )
 
 var ACLs = map[string]s3.ACL{
@@ -193,4 +193,14 @@ func (s *S3Storage) ModifiedTime(filepath string) (time.Time, error) {
 	}
 
 	return time.Parse(LastModifiedFormat, key.LastModified)
+}
+
+// IsNotExist returns a boolean indicating whether the error is known
+// to report that a file or directory does not exist.
+func (s *S3Storage) IsNotExist(err error) bool {
+	thr, ok := err.(*s3.Error)
+	if !ok {
+		return false
+	}
+	return thr.StatusCode == 404
 }
