@@ -12,11 +12,9 @@ import (
 	"google.golang.org/api/option"
 )
 
-//const LastModifiedFormat = time.RFC1123
-
 var ctx = context.Background()
 
-func NewGCSStorage(credentialsFile, bucket, location, baseURL string) (Storage, error) {
+func NewGCSStorage(credentialsFile, bucket, location, baseURL, cacheControl string) (Storage, error) {
 	client, err := storage.NewClient(ctx, option.WithCredentialsFile(credentialsFile))
 	if err != nil {
 		return nil, err
@@ -25,12 +23,14 @@ func NewGCSStorage(credentialsFile, bucket, location, baseURL string) (Storage, 
 	return &GCSStorage{
 		NewBaseStorage(location, baseURL),
 		client.Bucket(bucket),
+		cacheControl,
 	}, nil
 }
 
 type GCSStorage struct {
 	*BaseStorage
-	bucket *storage.BucketHandle
+	bucket       *storage.BucketHandle
+	cacheControl string
 }
 
 type GCSStorageFile struct {
@@ -111,6 +111,7 @@ func (gcs *GCSStorage) SaveWithContentType(filepath string, file File, contentTy
 	w := object.NewWriter(ctx)
 
 	w.ContentType = contentType
+	w.CacheControl = gcs.cacheControl
 	_, err = w.Write(content)
 	if err != nil {
 		return err
@@ -135,21 +136,3 @@ func (gcs *GCSStorage) Size(filepath string) int64 {
 
 	return attrs.Size
 }
-
-/*
-func (gcs *GCSStorage) Object(filepath string) (*storage.ObjectHandle, error) {
-	bucket, err := gcs.Bucket()
-
-	if err != nil {
-		return nil, err
-	}
-
-	key, err := bucket.GetKey(gcs.Path(filepath))
-
-	if err != nil {
-		return nil, err
-	}
-
-	return key, nil
-}
-*/

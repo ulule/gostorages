@@ -13,23 +13,21 @@ func TestGCS(t *testing.T) {
 		return
 	}
 	baseURL := "http://aa"
-	storage, err := NewGCSStorage(credentailsFile, "someBucket", "testfolder", baseURL)
+	storage, err := NewGCSStorage(credentailsFile, "cdn.lonje.com", "testfolder", baseURL, "max-age=86400")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	/*
-		filename := "test.txt"
-		assert.True(t, storage.Exists(filename))
+	filename := "test.txt"
+	assert.True(t, storage.Exists(filename))
 
-		storageFile, err := storage.Open(filename)
+	storageFile, err := storage.Open(filename)
 
-		if err != nil {
-			t.Fatal(err)
-		}
+	if err != nil {
+		t.Fatal(err)
+	}
 
-		assert.Equal(t, int64(5), storageFile.Size())
-	*/
+	assert.Equal(t, int64(5), storageFile.Size())
 
 	err = storage.Save("test", NewContentFile([]byte("a content example")))
 
