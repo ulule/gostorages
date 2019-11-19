@@ -1,25 +1,25 @@
 package gostorages
 
 import (
+	"context"
+	"errors"
+	"io"
 	"time"
 )
 
+// Storage is the storage interface.
 type Storage interface {
-	Save(filepath string, file File) error
-	Path(filepath string) string
-	Exists(filepath string) bool
-	Delete(filepath string) error
-	Open(filepath string) (File, error)
-	ModifiedTime(filepath string) (time.Time, error)
-	Size(filepath string) int64
-	URL(filename string) string
-	HasBaseURL() bool
-	IsNotExist(err error) bool
+	Save(ctx context.Context, content io.Reader, path string) error
+	Stat(ctx context.Context, path string) (*Stat, error)
+	Open(ctx context.Context, path string) (io.ReadCloser, error)
+	Delete(ctx context.Context, path string) error
 }
 
-type File interface {
-	Size() int64
-	Read(b []byte) (int, error)
-	ReadAll() ([]byte, error)
-	Close() error
+// Stat contains metadata about content stored in storage.
+type Stat struct {
+	ModifiedTime time.Time
+	Size         int64
 }
+
+// ErrNotExist is a sentinel error returned by the Stat method.
+var ErrNotExist = errors.New("does not exist")
