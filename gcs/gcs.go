@@ -29,14 +29,12 @@ func NewStorage(ctx context.Context, credentialsFile, bucket string) (*Storage, 
 // Save saves content to path.
 func (g *Storage) Save(ctx context.Context, content io.Reader, path string) error {
 	w := g.bucket.Object(path).NewWriter(ctx)
-	defer w.Close()
-
 	w.ContentType = mime.TypeByExtension(filepath.Ext(path))
 
 	if _, err := io.Copy(w, content); err != nil {
 		return err
 	}
-	return nil
+	return w.Close()
 }
 
 // Stat returns path metadata.
