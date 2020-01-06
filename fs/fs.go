@@ -64,7 +64,11 @@ func (fs *Storage) Stat(ctx context.Context, path string) (*gostorages.Stat, err
 
 // Open opens path for reading.
 func (fs *Storage) Open(ctx context.Context, path string) (io.ReadCloser, error) {
-	return os.Open(fs.abs(path))
+	f, err := os.Open(fs.abs(path))
+	if os.IsNotExist(err) {
+		return nil, gostorages.ErrNotExist
+	}
+	return f, err
 }
 
 // Delete deletes path.

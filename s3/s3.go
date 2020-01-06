@@ -91,7 +91,9 @@ func (s *Storage) Open(ctx context.Context, path string) (io.ReadCloser, error) 
 		Key:    aws.String(path),
 	}
 	out, err := s.s3.GetObjectWithContext(ctx, input)
-	if err != nil {
+	if aerr, ok := err.(awserr.Error); ok && aerr.Code() == s3.ErrCodeNoSuchKey {
+		return nil, gostorages.ErrNotExist
+	} else if err != nil {
 		return nil, err
 	}
 	return out.Body, nil

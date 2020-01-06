@@ -21,5 +21,5 @@ type Stat struct {
 	Size         int64
 }
 
-// ErrNotExist is a sentinel error returned by the Stat method.
+// ErrNotExist is a sentinel error returned by the Open and the Stat methods.
 var ErrNotExist = errors.New("does not exist")
