@@ -61,7 +61,11 @@ func (g *Storage) Stat(ctx context.Context, path string) (*gostorages.Stat, erro
 
 // Open opens path for reading.
 func (g *Storage) Open(ctx context.Context, path string) (io.ReadCloser, error) {
-	return g.bucket.Object(path).NewReader(ctx)
+	r, err := g.bucket.Object(path).NewReader(ctx)
+	if err == storage.ErrObjectNotExist {
+		return nil, gostorages.ErrNotExist
+	}
+	return r, err
 }
 
 // Delete deletes path.
