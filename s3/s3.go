@@ -18,6 +18,7 @@ import (
 // Storage is a s3 storage.
 type Storage struct {
 	bucket   string
+	ACL      string
 	s3       *s3.S3
 	uploader *s3manager.Uploader
 }
@@ -29,7 +30,8 @@ func NewStorage(cfg Config) (*Storage, error) {
 			AccessKeyID:     cfg.AccessKeyID,
 			SecretAccessKey: cfg.SecretAccessKey,
 		}),
-		Region: aws.String(cfg.Region),
+		Region:   aws.String(cfg.Region),
+		Endpoint: cfg.Endpoint,
 	})
 	if err != nil {
 		return nil, err
@@ -37,6 +39,7 @@ func NewStorage(cfg Config) (*Storage, error) {
 
 	return &Storage{
 		bucket:   cfg.Bucket,
+        ACL:      cfg.ACL,
 		s3:       s3.New(s),
 		uploader: s3manager.NewUploader(s),
 	}, nil
@@ -48,12 +51,14 @@ type Config struct {
 	SecretAccessKey string
 	Region          string
 	Bucket          string
+	ACL             string
+	Endpoint        *string
 }
 
 // Save saves content to path.
 func (s *Storage) Save(ctx context.Context, content io.Reader, path string) error {
 	input := &s3manager.UploadInput{
-		ACL:         aws.String(s3.ObjectCannedACLPublicRead),
+		ACL:         aws.String(s.ACL),
 		Body:        content,
 		Bucket:      aws.String(s.bucket),
 		ContentType: aws.String(mime.TypeByExtension(filepath.Ext(path))),
