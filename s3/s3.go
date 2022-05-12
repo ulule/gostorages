@@ -1,9 +1,11 @@
 package s3
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"mime"
+	"net/http"
 	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -53,11 +55,24 @@ type Config struct {
 // Save saves content to path.
 func (s *Storage) Save(ctx context.Context, content io.Reader, path string) error {
 	input := &s3manager.UploadInput{
-		ACL:         aws.String(s3.ObjectCannedACLPublicRead),
-		Body:        content,
-		Bucket:      aws.String(s.bucket),
-		ContentType: aws.String(mime.TypeByExtension(filepath.Ext(path))),
-		Key:         aws.String(path),
+		ACL:    aws.String(s3.ObjectCannedACLPublicRead),
+		Body:   content,
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(path),
+	}
+
+	contenttype := mime.TypeByExtension(filepath.Ext(path)) // first, detect content type from extension
+	if contenttype == "" {
+		// second, detect content type from first 512 bytes of content
+		data := make([]byte, 512)
+		if _, err := content.Read(data); err != nil {
+			return err
+		}
+		contenttype = http.DetectContentType(data)
+		input.Body = io.MultiReader(bytes.NewReader(data), content)
+	}
+	if contenttype != "" {
+		input.ContentType = aws.String(contenttype)
 	}
 
 	_, err := s.uploader.UploadWithContext(ctx, input)
