@@ -26,13 +26,17 @@ type Storage struct {
 
 // NewStorage returns a new Storage.
 func NewStorage(cfg Config) (*Storage, error) {
-	s, err := session.NewSession(&aws.Config{
+	awscfg := &aws.Config{
 		Credentials: credentials.NewStaticCredentialsFromCreds(credentials.Value{
 			AccessKeyID:     cfg.AccessKeyID,
 			SecretAccessKey: cfg.SecretAccessKey,
 		}),
 		Region: aws.String(cfg.Region),
-	})
+	}
+	if cfg.Endpoint != "" {
+		awscfg.Endpoint = &(cfg.Endpoint)
+	}
+	s, err := session.NewSession(awscfg)
 	if err != nil {
 		return nil, err
 	}
@@ -47,9 +51,10 @@ func NewStorage(cfg Config) (*Storage, error) {
 // Config is the configuration for Storage.
 type Config struct {
 	AccessKeyID     string
-	SecretAccessKey string
-	Region          string
 	Bucket          string
+	Endpoint        string
+	Region          string
+	SecretAccessKey string
 }
 
 // Save saves content to path.
