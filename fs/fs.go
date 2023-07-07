@@ -2,11 +2,10 @@ package fs
 
 import (
 	"context"
+	"github.com/ulule/gostorages"
 	"io"
 	"os"
 	"path/filepath"
-
-	"github.com/ulule/gostorages"
 )
 
 // Storage is a filesystem storage.
@@ -74,4 +73,20 @@ func (fs *Storage) Open(ctx context.Context, path string) (io.ReadCloser, error)
 // Delete deletes path.
 func (fs *Storage) Delete(ctx context.Context, path string) error {
 	return os.Remove(fs.abs(path))
+}
+
+// OpenWithStat opens path for reading with file stats.
+func (fs *Storage) OpenWithStat(ctx context.Context, path string) (io.ReadCloser, *gostorages.Stat, error) {
+	f, err := os.Open(fs.abs(path))
+	if os.IsNotExist(err) {
+		return nil, nil, gostorages.ErrNotExist
+	}
+	stat, err := f.Stat()
+	if err != nil {
+		return nil, nil, err
+	}
+	return f, &gostorages.Stat{
+		ModifiedTime: stat.ModTime(),
+		Size:         stat.Size(),
+	}, nil
 }

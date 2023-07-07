@@ -12,6 +12,7 @@ type Storage interface {
 	Save(ctx context.Context, content io.Reader, path string) error
 	Stat(ctx context.Context, path string) (*Stat, error)
 	Open(ctx context.Context, path string) (io.ReadCloser, error)
+	OpenWithStat(ctx context.Context, path string) (io.ReadCloser, *Stat, error)
 	Delete(ctx context.Context, path string) error
 }
 

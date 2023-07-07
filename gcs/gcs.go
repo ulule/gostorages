@@ -1,14 +1,13 @@
 package gcs
 
 import (
+	"cloud.google.com/go/storage"
 	"context"
+	"github.com/ulule/gostorages"
+	"google.golang.org/api/option"
 	"io"
 	"mime"
 	"path/filepath"
-
-	"cloud.google.com/go/storage"
-	"github.com/ulule/gostorages"
-	"google.golang.org/api/option"
 )
 
 // Storage is a gcs storage.
@@ -65,10 +64,23 @@ func (g *Storage) Open(ctx context.Context, path string) (io.ReadCloser, error) 
 	if err == storage.ErrObjectNotExist {
 		return nil, gostorages.ErrNotExist
 	}
+
 	return r, err
 }
 
 // Delete deletes path.
 func (g *Storage) Delete(ctx context.Context, path string) error {
 	return g.bucket.Object(path).Delete(ctx)
+}
+
+// OpenWithStat opens path for reading with file stats.
+func (g *Storage) OpenWithStat(ctx context.Context, path string) (io.ReadCloser, *gostorages.Stat, error) {
+	r, err := g.bucket.Object(path).NewReader(ctx)
+	if err == storage.ErrObjectNotExist {
+		return nil, nil, gostorages.ErrNotExist
+	}
+	return r, &gostorages.Stat{
+		ModifiedTime: r.Attrs.LastModified,
+		Size:         r.Attrs.Size,
+	}, err
 }
