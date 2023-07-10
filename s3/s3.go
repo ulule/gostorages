@@ -3,11 +3,6 @@ package s3
 import (
 	"bytes"
 	"context"
-	"io"
-	"mime"
-	"net/http"
-	"path/filepath"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -15,6 +10,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/ulule/gostorages"
+	"io"
+	"mime"
+	"net/http"
+	"path/filepath"
 )
 
 // Storage is a s3 storage.
@@ -127,4 +126,22 @@ func (s *Storage) Delete(ctx context.Context, path string) error {
 	}
 	_, err := s.s3.DeleteObjectWithContext(ctx, input)
 	return err
+}
+
+// OpenWithStat opens path for reading with file stats.
+func (s *Storage) OpenWithStat(ctx context.Context, path string) (io.ReadCloser, *gostorages.Stat, error) {
+	input := &s3.GetObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(path),
+	}
+	out, err := s.s3.GetObjectWithContext(ctx, input)
+	if aerr, ok := err.(awserr.Error); ok && aerr.Code() == s3.ErrCodeNoSuchKey {
+		return nil, nil, gostorages.ErrNotExist
+	} else if err != nil {
+		return nil, nil, err
+	}
+	return out.Body, &gostorages.Stat{
+		ModifiedTime: *out.LastModified,
+		Size:         *out.ContentLength,
+	}, nil
 }
