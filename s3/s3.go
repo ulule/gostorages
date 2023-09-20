@@ -3,17 +3,19 @@ package s3
 import (
 	"bytes"
 	"context"
+	"io"
+	"mime"
+	"net/http"
+	"path/filepath"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/pkg/errors"
 	"github.com/ulule/gostorages"
-	"io"
-	"mime"
-	"net/http"
-	"path/filepath"
 )
 
 // Storage is a s3 storage.
@@ -136,7 +138,8 @@ func (s *Storage) OpenWithStat(ctx context.Context, path string) (io.ReadCloser,
 	}
 	out, err := s.s3.GetObjectWithContext(ctx, input)
 	if aerr, ok := err.(awserr.Error); ok && aerr.Code() == s3.ErrCodeNoSuchKey {
-		return nil, nil, gostorages.ErrNotExist
+		return nil, nil, errors.Wrapf(gostorages.ErrNotExist,
+			"%s does not exist in bucket %s, code: %s", path, s.bucket, s3.ErrCodeNoSuchKey)
 	} else if err != nil {
 		return nil, nil, err
 	}
