@@ -3,49 +3,59 @@ package s3
 import (
 	"bytes"
 	"context"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/pkg/errors"
+	"github.com/ulule/gostorages"
 	"io"
 	"mime"
 	"net/http"
 	"path/filepath"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/pkg/errors"
-	"github.com/ulule/gostorages"
 )
+
+type CustomAPIHTTPClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
+
+func withUploaderConcurrency(concurrency int64) func(uploader *manager.Uploader) {
+	return func(uploader *manager.Uploader) {
+		uploader.Concurrency = int(concurrency)
+	}
+}
 
 // Storage is a s3 storage.
 type Storage struct {
 	bucket   string
-	s3       *s3.S3
-	uploader *s3manager.Uploader
+	s3       *s3.Client
+	uploader *manager.Uploader
 }
 
 // NewStorage returns a new Storage.
 func NewStorage(cfg Config) (*Storage, error) {
-	awscfg := &aws.Config{
-		Credentials: credentials.NewStaticCredentialsFromCreds(credentials.Value{
-			AccessKeyID:     cfg.AccessKeyID,
-			SecretAccessKey: cfg.SecretAccessKey,
-		}),
-		Region: aws.String(cfg.Region),
+	awscfg := aws.Config{
+		Credentials: credentials.NewStaticCredentialsProvider(cfg.AccessKeyID, cfg.SecretAccessKey, ""),
+		Region:      *aws.String(cfg.Region),
 	}
-	if cfg.Endpoint != "" {
-		awscfg.Endpoint = &(cfg.Endpoint)
-	}
-	s, err := session.NewSession(awscfg)
-	if err != nil {
-		return nil, err
-	}
+	var uploaderopts []func(uploader *manager.Uploader)
+	client := s3.NewFromConfig(awscfg, func(o *s3.Options) {
+		if cfg.Endpoint != "" {
+			o.BaseEndpoint = aws.String(cfg.Endpoint)
+		}
+		if cfg.CustomHTTPClient != nil {
+			o.HTTPClient = cfg.CustomHTTPClient
+		}
+	})
 
+	if cfg.UploadConcurrency != nil {
+		uploaderopts = append(uploaderopts, withUploaderConcurrency(*cfg.UploadConcurrency))
+	}
 	return &Storage{
 		bucket:   cfg.Bucket,
-		s3:       s3.New(s),
-		uploader: s3manager.NewUploader(s),
+		s3:       client,
+		uploader: manager.NewUploader(client, uploaderopts...),
 	}, nil
 }
 
@@ -56,12 +66,16 @@ type Config struct {
 	Endpoint        string
 	Region          string
 	SecretAccessKey string
+
+	UploadConcurrency *int64
+
+	CustomHTTPClient CustomAPIHTTPClient
 }
 
 // Save saves content to path.
 func (s *Storage) Save(ctx context.Context, content io.Reader, path string) error {
-	input := &s3manager.UploadInput{
-		ACL:    aws.String(s3.ObjectCannedACLPublicRead),
+	input := &s3.PutObjectInput{
+		ACL:    types.ObjectCannedACLPublicRead,
 		Body:   content,
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(path),
@@ -71,18 +85,18 @@ func (s *Storage) Save(ctx context.Context, content io.Reader, path string) erro
 	if contenttype == "" {
 		// second, detect content type from first 512 bytes of content
 		data := make([]byte, 512)
-		if _, err := content.Read(data); err != nil {
+		n, err := content.Read(data)
+		if err != nil {
 			return err
 		}
 		contenttype = http.DetectContentType(data)
-		input.Body = io.MultiReader(bytes.NewReader(data), content)
+		input.Body = io.MultiReader(bytes.NewReader(data[:n]), content)
 	}
 	if contenttype != "" {
 		input.ContentType = aws.String(contenttype)
 	}
-
-	_, err := s.uploader.UploadWithContext(ctx, input)
-	return err
+	_, err := s.uploader.Upload(ctx, input)
+	return errors.WithStack(err)
 }
 
 // Stat returns path metadata.
@@ -91,17 +105,17 @@ func (s *Storage) Stat(ctx context.Context, path string) (*gostorages.Stat, erro
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(path),
 	}
-	out, err := s.s3.HeadObjectWithContext(ctx, input)
-
-	if aerr, ok := err.(awserr.Error); ok && aerr.Code() == "NotFound" {
+	out, err := s.s3.HeadObject(ctx, input)
+	var notfounderr *types.NotFound
+	if errors.As(err, &notfounderr) {
 		return nil, gostorages.ErrNotExist
 	} else if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	return &gostorages.Stat{
 		ModifiedTime: *out.LastModified,
-		Size:         *out.ContentLength,
+		Size:         out.ContentLength,
 	}, nil
 }
 
@@ -111,11 +125,12 @@ func (s *Storage) Open(ctx context.Context, path string) (io.ReadCloser, error) 
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(path),
 	}
-	out, err := s.s3.GetObjectWithContext(ctx, input)
-	if aerr, ok := err.(awserr.Error); ok && aerr.Code() == s3.ErrCodeNoSuchKey {
+	out, err := s.s3.GetObject(ctx, input)
+	var notsuckkeyerr *types.NoSuchKey
+	if errors.As(err, &notsuckkeyerr) {
 		return nil, gostorages.ErrNotExist
 	} else if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return out.Body, nil
 }
@@ -126,8 +141,8 @@ func (s *Storage) Delete(ctx context.Context, path string) error {
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(path),
 	}
-	_, err := s.s3.DeleteObjectWithContext(ctx, input)
-	return err
+	_, err := s.s3.DeleteObject(ctx, input)
+	return errors.WithStack(err)
 }
 
 // OpenWithStat opens path for reading with file stats.
@@ -136,15 +151,18 @@ func (s *Storage) OpenWithStat(ctx context.Context, path string) (io.ReadCloser,
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(path),
 	}
-	out, err := s.s3.GetObjectWithContext(ctx, input)
-	if aerr, ok := err.(awserr.Error); ok && aerr.Code() == s3.ErrCodeNoSuchKey {
+
+	out, err := s.s3.GetObject(ctx, input)
+	var notsuckkeyerr *types.NoSuchKey
+	if errors.As(err, &notsuckkeyerr) {
 		return nil, nil, errors.Wrapf(gostorages.ErrNotExist,
-			"%s does not exist in bucket %s, code: %s", path, s.bucket, s3.ErrCodeNoSuchKey)
+			"%s does not exist in bucket %s, code: %s", path, s.bucket, notsuckkeyerr.Error())
 	} else if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithStack(err)
 	}
+
 	return out.Body, &gostorages.Stat{
 		ModifiedTime: *out.LastModified,
-		Size:         *out.ContentLength,
+		Size:         out.ContentLength,
 	}, nil
 }

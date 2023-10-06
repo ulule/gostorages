@@ -2,6 +2,7 @@ package fs
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	"github.com/ulule/gostorages"
 	"io"
 	"os"
@@ -31,17 +32,17 @@ func (fs *Storage) abs(path string) string {
 func (fs *Storage) Save(ctx context.Context, content io.Reader, path string) error {
 	abs := fs.abs(path)
 	if err := os.MkdirAll(filepath.Dir(abs), 0755); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	w, err := os.Create(abs)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	defer w.Close()
 
 	if _, err := io.Copy(w, content); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	return nil
 }
@@ -52,7 +53,7 @@ func (fs *Storage) Stat(ctx context.Context, path string) (*gostorages.Stat, err
 	if os.IsNotExist(err) {
 		return nil, gostorages.ErrNotExist
 	} else if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	return &gostorages.Stat{
@@ -67,7 +68,7 @@ func (fs *Storage) Open(ctx context.Context, path string) (io.ReadCloser, error)
 	if os.IsNotExist(err) {
 		return nil, gostorages.ErrNotExist
 	}
-	return f, err
+	return f, errors.WithStack(err)
 }
 
 // Delete deletes path.
@@ -83,7 +84,7 @@ func (fs *Storage) OpenWithStat(ctx context.Context, path string) (io.ReadCloser
 	}
 	stat, err := f.Stat()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithStack(err)
 	}
 	return f, &gostorages.Stat{
 		ModifiedTime: stat.ModTime(),
