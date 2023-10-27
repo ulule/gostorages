@@ -11,12 +11,14 @@ import (
 	"github.com/ulule/gostorages"
 )
 
-func Test(t *testing.T) {
-	accessKeyID := os.Getenv("ACCESS_KEY_ID")
-	secretAccessKey := os.Getenv("SECRET_ACCESS_KEY")
-	region := os.Getenv("AWS_REGION")
-	bucket := os.Getenv("S3_BUCKET")
+var (
+	accessKeyID     = os.Getenv("ACCESS_KEY_ID")
+	secretAccessKey = os.Getenv("SECRET_ACCESS_KEY")
+	region          = os.Getenv("AWS_REGION")
+	bucket          = os.Getenv("S3_BUCKET")
+)
 
+func Test(t *testing.T) {
 	if accessKeyID == "" ||
 		secretAccessKey == "" ||
 		region == "" ||
