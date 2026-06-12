@@ -79,9 +79,11 @@ func (g *Storage) OpenWithStat(ctx context.Context, path string) (io.ReadCloser,
 	r, err := g.bucket.Object(path).NewReader(ctx)
 	if errors.Is(err, storage.ErrObjectNotExist) {
 		return nil, nil, gostorages.ErrNotExist
+	} else if err != nil {
+		return nil, nil, errors.WithStack(err)
 	}
 	return r, &gostorages.Stat{
 		ModifiedTime: r.Attrs.LastModified,
 		Size:         r.Attrs.Size,
-	}, errors.WithStack(err)
+	}, nil
 }
